@@ -1,0 +1,6 @@
+@ReemProject.API_HostAddress = http://localhost:5167
+
+GET {{ReemProject.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

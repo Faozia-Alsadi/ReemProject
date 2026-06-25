@@ -1,0 +1,13 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="#">{{ 'app.title' | translate }}</a>
+    <div class="ms-auto d-flex gap-2">
+      <button class="btn btn-sm btn-outline-light" (click)="setLanguage('ar')">عربي</button>
+      <button class="btn btn-sm btn-outline-light" (click)="setLanguage('en')">EN</button>
+    </div>
+  </div>
+</nav>
+
+<main class="container mt-4">
+  <router-outlet />
+</main>

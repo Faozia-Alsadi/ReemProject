@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ReemProject.API/ReemProject.API.csproj" />
+  <Project Path="ReemProject.Application/ReemProject.Application.csproj" />
+  <Project Path="ReemProject.Domain/ReemProject.Domain.csproj" />
+  <Project Path="ReemProject.Infrastructure/ReemProject.Infrastructure.csproj" />
+</Solution>
