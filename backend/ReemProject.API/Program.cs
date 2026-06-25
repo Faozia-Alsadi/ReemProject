@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ── Layers ─────────────────────────────────────────────────────────────────
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 
 // ── Controllers & OpenAPI ───────────────────────────────────────────────────
 builder.Services.AddControllers();

@@ -48,6 +48,11 @@ secrets.json
 Thumbs.db
 desktop.ini
 
+# SQLite dev database (never commit)
+*.db
+*.db-shm
+*.db-wal
+
 # ============================================================
 # IDE
 # ============================================================
