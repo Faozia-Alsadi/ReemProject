@@ -1,30 +1,29 @@
 using Microsoft.EntityFrameworkCore;
 using ReemProject.Application.Common.Interfaces;
+using ReemProject.Domain.Entities;
 
 namespace ReemProject.Infrastructure.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
     : DbContext(options), IApplicationDbContext
 {
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Value> Values => Set<Value>();
+    public DbSet<Project> Projects => Set<Project>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+        modelBuilder.Entity<Project>()
+            .HasOne(p => p.Value)
+            .WithMany(v => v.Projects)
+            .HasForeignKey(p => p.ValueId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        // Global soft-delete filter
-        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-        {
-            var isDeletedProperty = entityType.FindProperty("IsDeleted");
-            if (isDeletedProperty != null && isDeletedProperty.ClrType == typeof(bool))
-            {
-                var parameter = System.Linq.Expressions.Expression.Parameter(entityType.ClrType);
-                var filter = System.Linq.Expressions.Expression.Lambda(
-                    System.Linq.Expressions.Expression.Equal(
-                        System.Linq.Expressions.Expression.Property(parameter, "IsDeleted"),
-                        System.Linq.Expressions.Expression.Constant(false)),
-                    parameter);
-                entityType.SetQueryFilter(filter);
-            }
-        }
+        modelBuilder.Entity<Project>()
+            .HasOne(p => p.Manager)
+            .WithMany(u => u.Projects)
+            .HasForeignKey(p => p.ManagerId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         base.OnModelCreating(modelBuilder);
     }
@@ -35,12 +34,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             if (entry.State == EntityState.Modified)
             {
-                var updatedAt = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "UpdatedAt");
-                if (updatedAt != null)
-                    updatedAt.CurrentValue = DateTime.UtcNow;
+                var prop = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "UpdatedAt");
+                if (prop != null) prop.CurrentValue = DateTime.UtcNow;
             }
         }
-
         return await base.SaveChangesAsync(cancellationToken);
     }
 }

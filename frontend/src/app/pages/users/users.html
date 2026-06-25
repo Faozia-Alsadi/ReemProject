@@ -1,0 +1,137 @@
+<!-- Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">المستخدمون</h4>
+    <p class="text-muted mb-0 small">إدارة حسابات مديري المشاريع</p>
+  </div>
+  <button class="btn btn-primary d-flex align-items-center gap-2" (click)="openAdd()"
+          style="background:#1a3a5c;border-color:#1a3a5c">
+    <i class="bi bi-person-plus"></i> إضافة مستخدم
+  </button>
+</div>
+
+@if (loading) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="text-muted mt-2">جاري التحميل...</p>
+  </div>
+} @else {
+  <div class="card border-0 shadow-sm" style="border-radius:12px">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead style="background:#f4f6f9">
+          <tr>
+            <th class="border-0 py-3 px-4">#</th>
+            <th class="border-0 py-3">الاسم</th>
+            <th class="border-0 py-3">البريد الإلكتروني</th>
+            <th class="border-0 py-3">القسم</th>
+            <th class="border-0 py-3">الدور</th>
+            <th class="border-0 py-3">المشاريع</th>
+            <th class="border-0 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of users; track u.id; let i = $index) {
+            <tr>
+              <td class="px-4 text-muted small">{{ i + 1 }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                       style="width:36px;height:36px;background:#1a3a5c;font-size:13px;flex-shrink:0">
+                    {{ u.fullNameAr.charAt(0) }}
+                  </div>
+                  <div>
+                    <div class="fw-semibold">{{ u.fullNameAr }}</div>
+                    <div class="text-muted small">{{ u.fullNameEn }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="text-muted small" dir="ltr">{{ u.email }}</td>
+              <td class="small">{{ u.department || '—' }}</td>
+              <td>
+                <span class="badge rounded-pill"
+                      [style.background]="u.role === 0 ? '#1a3a5c' : '#2e86c1'"
+                      style="font-size:11px;color:#fff">
+                  {{ roleLabel(u.role) }}
+                </span>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark rounded-pill">{{ u.projectCount }}</span>
+              </td>
+              <td class="text-end pe-3">
+                <button class="btn btn-sm btn-outline-secondary" (click)="openEdit(u)">
+                  <i class="bi bi-pencil"></i>
+                </button>
+              </td>
+            </tr>
+          }
+          @if (users.length === 0) {
+            <tr>
+              <td colspan="7" class="text-center text-muted py-5">
+                <i class="bi bi-people fs-2 d-block mb-2"></i>
+                لا يوجد مستخدمون
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+<!-- Add/Edit User Modal -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:12px">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">{{ editMode ? 'تعديل المستخدم' : 'إضافة مستخدم جديد' }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label fw-semibold">الاسم (عربي) <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="form.fullNameAr" placeholder="الاسم الكامل بالعربية">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">الاسم (إنجليزي)</label>
+            <input type="text" class="form-control" [(ngModel)]="form.fullNameEn" placeholder="Full name in English" dir="ltr">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">البريد الإلكتروني <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" [(ngModel)]="form.email" placeholder="email@moe.gov.qa" dir="ltr">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">القسم</label>
+            <input type="text" class="form-control" [(ngModel)]="form.department" placeholder="اسم القسم">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">الدور</label>
+            <select class="form-select" [(ngModel)]="form.role">
+              <option [ngValue]="1">مدير مشروع</option>
+              <option [ngValue]="0">مدير النظام</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">
+              كلمة المرور
+              @if (editMode) { <span class="text-muted small">(اتركها فارغة لعدم التغيير)</span> }
+              @else { <span class="text-danger">*</span> }
+            </label>
+            <input type="password" class="form-control" [(ngModel)]="form.password"
+                   [placeholder]="editMode ? '••••••••' : 'كلمة المرور'" dir="ltr">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-primary" (click)="save()"
+                [disabled]="saving || !form.fullNameAr || !form.email || (!editMode && !form.password)"
+                style="background:#1a3a5c;border-color:#1a3a5c">
+          @if (saving) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          {{ editMode ? 'حفظ التعديلات' : 'إضافة المستخدم' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

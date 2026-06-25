@@ -1,0 +1,176 @@
+<!-- Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">لوحة المعلومات</h4>
+    <p class="text-muted mb-0 small">نظرة عامة على مشاريع المكتب الفني</p>
+  </div>
+  <div class="text-muted small">
+    <i class="bi bi-calendar3 me-1"></i>
+    {{ auth.currentUser()?.role === 'Admin' ? 'جميع المشاريع' : 'مشاريعي' }}
+  </div>
+</div>
+
+@if (loading) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="text-muted mt-2">جاري تحميل البيانات...</p>
+  </div>
+} @else if (stats) {
+
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100" style="border-right:4px solid #1a5276 !important;border-radius:12px">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                 style="width:48px;height:48px;background:#eaf2fb">
+              <i class="bi bi-kanban fs-5" style="color:#1a5276"></i>
+            </div>
+            <div>
+              <div class="fs-2 fw-bold lh-1">{{ stats.totalProjects }}</div>
+              <div class="text-muted small">إجمالي المشاريع</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100" style="border-right:4px solid #7f8c8d !important;border-radius:12px">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                 style="width:48px;height:48px;background:#f2f3f4">
+              <i class="bi bi-hourglass fs-5" style="color:#7f8c8d"></i>
+            </div>
+            <div>
+              <div class="fs-2 fw-bold lh-1">{{ stats.notStarted }}</div>
+              <div class="text-muted small">لم تبدأ</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100" style="border-right:4px solid #e67e22 !important;border-radius:12px">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                 style="width:48px;height:48px;background:#fef9e7">
+              <i class="bi bi-arrow-repeat fs-5" style="color:#e67e22"></i>
+            </div>
+            <div>
+              <div class="fs-2 fw-bold lh-1">{{ stats.inProgress }}</div>
+              <div class="text-muted small">قيد التنفيذ</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100" style="border-right:4px solid #27ae60 !important;border-radius:12px">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                 style="width:48px;height:48px;background:#eafaf1">
+              <i class="bi bi-check-circle fs-5" style="color:#27ae60"></i>
+            </div>
+            <div>
+              <div class="fs-2 fw-bold lh-1">{{ stats.completed }}</div>
+              <div class="text-muted small">مكتملة</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- By Value + Recent Projects -->
+  <div class="row g-3">
+    <!-- By Value breakdown -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm h-100" style="border-radius:12px">
+        <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+          <h6 class="fw-bold mb-0">المشاريع حسب القيمة</h6>
+        </div>
+        <div class="card-body">
+          @for (v of stats.byValue; track v.nameAr) {
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="fw-semibold small d-flex align-items-center gap-2">
+                  <span class="rounded-circle d-inline-block"
+                        [style.background]="v.color"
+                        style="width:10px;height:10px"></span>
+                  {{ v.nameAr }}
+                </span>
+                <span class="text-muted small">{{ v.total }} مشروع</span>
+              </div>
+              <div class="progress" style="height:10px;border-radius:6px">
+                <div class="progress-bar"
+                     [style.width.%]="pct(v.completed, v.total)"
+                     [style.background]="'#27ae60'"
+                     title="مكتمل: {{v.completed}}"></div>
+                <div class="progress-bar"
+                     [style.width.%]="pct(v.inProgress, v.total)"
+                     [style.background]="'#e67e22'"
+                     title="قيد التنفيذ: {{v.inProgress}}"></div>
+                <div class="progress-bar"
+                     [style.width.%]="pct(v.notStarted, v.total)"
+                     [style.background]="'#dee2e6'"
+                     title="لم تبدأ: {{v.notStarted}}"></div>
+              </div>
+              <div class="d-flex gap-3 mt-1" style="font-size:11px;color:#888">
+                <span><span class="badge rounded-pill me-1" style="background:#27ae60;font-size:10px">{{ v.completed }}</span>مكتمل</span>
+                <span><span class="badge rounded-pill me-1" style="background:#e67e22;font-size:10px">{{ v.inProgress }}</span>جاري</span>
+                <span><span class="badge rounded-pill me-1" style="background:#aaa;font-size:10px">{{ v.notStarted }}</span>لم يبدأ</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Projects -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm h-100" style="border-radius:12px">
+        <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+          <h6 class="fw-bold mb-0">أحدث المشاريع</h6>
+        </div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush">
+            @for (p of stats.recentProjects; track p.id) {
+              <li class="list-group-item border-0 py-2 px-3">
+                <div class="d-flex align-items-start gap-2">
+                  <span class="rounded-circle flex-shrink-0"
+                        [style.background]="p.valueColor"
+                        style="width:8px;height:8px;display:inline-block;margin-top:6px"></span>
+                  <div class="flex-grow-1 overflow-hidden">
+                    <div class="small fw-semibold text-truncate">{{ p.nameAr }}</div>
+                    <div style="font-size:11px;color:#888">{{ p.valueNameAr }}</div>
+                    @if (p.managerNameAr) {
+                      <div style="font-size:11px;color:#aaa">{{ p.managerNameAr }}</div>
+                    }
+                  </div>
+                  <span class="badge rounded-pill flex-shrink-0"
+                        [style.background]="p.statusAr === 'مكتمل' ? '#27ae60' : p.statusAr === 'قيد التنفيذ' ? '#e67e22' : '#aaa'"
+                        style="font-size:10px;color:#fff">
+                    {{ p.statusAr }}
+                  </span>
+                </div>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+} @else {
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-exclamation-circle fs-1 d-block mb-2"></i>
+    تعذّر تحميل البيانات
+  </div>
+}

@@ -1,0 +1,204 @@
+<!-- Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">المشاريع</h4>
+    <p class="text-muted mb-0 small">إدارة مشاريع المكتب الفني</p>
+  </div>
+  @if (auth.isAdmin()) {
+    <button class="btn btn-primary d-flex align-items-center gap-2" (click)="openAdd()"
+            style="background:#1a3a5c;border-color:#1a3a5c">
+      <i class="bi bi-plus-lg"></i> إضافة مشروع
+    </button>
+  }
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius:12px">
+  <div class="card-body py-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-auto">
+        <label class="form-label mb-0 fw-semibold small">القيمة:</label>
+      </div>
+      <div class="col-auto">
+        <select class="form-select form-select-sm" [(ngModel)]="filterValueId" (change)="load()">
+          <option [ngValue]="null">الكل</option>
+          @for (v of values; track v.id) {
+            <option [ngValue]="v.id">{{ v.nameAr }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-auto">
+        <label class="form-label mb-0 fw-semibold small">الحالة:</label>
+      </div>
+      <div class="col-auto">
+        <select class="form-select form-select-sm" [(ngModel)]="filterStatus" (change)="load()">
+          <option [ngValue]="null">الكل</option>
+          @for (s of statusOptions; track s.value) {
+            <option [ngValue]="s.value">{{ s.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (loading) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="text-muted mt-2">جاري التحميل...</p>
+  </div>
+} @else if (grouped.length === 0) {
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+    لا توجد مشاريع
+  </div>
+} @else {
+  @for (group of grouped; track group.value.id) {
+    <!-- Value Group -->
+    <div class="mb-4">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <span class="rounded-circle" [style.background]="group.value.color"
+              style="width:14px;height:14px;display:inline-block"></span>
+        <h6 class="fw-bold mb-0">{{ group.value.nameAr }}</h6>
+        <span class="badge rounded-pill text-white" [style.background]="group.value.color">
+          {{ group.projects.length }}
+        </span>
+      </div>
+
+      <div class="row g-3">
+        @for (p of group.projects; track p.id) {
+          <div class="col-12 col-md-6 col-xl-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius:12px;border-top:3px solid {{group.value.color}} !important">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h6 class="fw-semibold mb-0 flex-grow-1">{{ p.nameAr }}</h6>
+                  <span class="badge rounded-pill ms-2 flex-shrink-0"
+                        [style.background]="statusColor(p.status)"
+                        style="font-size:10px;color:#fff">
+                    {{ p.statusAr }}
+                  </span>
+                </div>
+
+                @if (p.descriptionAr) {
+                  <p class="text-muted small mb-2">{{ p.descriptionAr }}</p>
+                }
+
+                <div class="mt-auto">
+                  @if (p.managerNameAr) {
+                    <div class="small text-muted d-flex align-items-center gap-1 mb-1">
+                      <i class="bi bi-person"></i> {{ p.managerNameAr }}
+                      @if (p.department) { <span class="text-muted">· {{ p.department }}</span> }
+                    </div>
+                  }
+                  @if (p.startDate) {
+                    <div class="small text-muted d-flex align-items-center gap-1">
+                      <i class="bi bi-calendar"></i>
+                      {{ p.startDate | date:'yyyy/MM/dd' }}
+                      @if (p.expectedEndDate) {
+                        <span>← {{ p.expectedEndDate | date:'yyyy/MM/dd' }}</span>
+                      }
+                    </div>
+                  }
+                </div>
+
+                @if (auth.isAdmin()) {
+                  <div class="d-flex gap-2 mt-3 pt-2 border-top">
+                    <button class="btn btn-sm btn-outline-secondary flex-grow-1" (click)="openEdit(p)">
+                      <i class="bi bi-pencil"></i> تعديل
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger"
+                            [disabled]="deleting === p.id" (click)="confirmDelete(p.id)">
+                      @if (deleting === p.id) {
+                        <span class="spinner-border spinner-border-sm"></span>
+                      } @else {
+                        <i class="bi bi-trash"></i>
+                      }
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+}
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="projectModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" style="border-radius:12px">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">{{ editMode ? 'تعديل المشروع' : 'إضافة مشروع جديد' }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label fw-semibold">اسم المشروع (عربي) <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="form.nameAr" placeholder="اسم المشروع بالعربية">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">اسم المشروع (إنجليزي)</label>
+            <input type="text" class="form-control" [(ngModel)]="form.nameEn" placeholder="Project name in English" dir="ltr">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">الوصف</label>
+            <textarea class="form-control" rows="2" [(ngModel)]="form.descriptionAr" placeholder="وصف المشروع"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">القيمة <span class="text-danger">*</span></label>
+            <select class="form-select" [(ngModel)]="form.valueId">
+              <option [ngValue]="undefined">اختر القيمة</option>
+              @for (v of values; track v.id) {
+                <option [ngValue]="v.id">{{ v.nameAr }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">الحالة</label>
+            <select class="form-select" [(ngModel)]="form.status">
+              @for (s of statusOptions; track s.value) {
+                <option [ngValue]="s.value">{{ s.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">المسؤول</label>
+            <select class="form-select" [(ngModel)]="form.managerId">
+              <option [ngValue]="undefined">بدون مسؤول</option>
+              @for (u of users; track u.id) {
+                <option [ngValue]="u.id">{{ u.fullNameAr }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">تاريخ البدء</label>
+            <input type="date" class="form-control" [(ngModel)]="form.startDate" dir="ltr">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">تاريخ الانتهاء المتوقع</label>
+            <input type="date" class="form-control" [(ngModel)]="form.expectedEndDate" dir="ltr">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">تاريخ الانتهاء الفعلي</label>
+            <input type="date" class="form-control" [(ngModel)]="form.actualEndDate" dir="ltr">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">ملاحظات</label>
+            <textarea class="form-control" rows="2" [(ngModel)]="form.notes" placeholder="ملاحظات إضافية"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-primary" (click)="save()" [disabled]="saving || !form.nameAr || !form.valueId"
+                style="background:#1a3a5c;border-color:#1a3a5c">
+          @if (saving) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          {{ editMode ? 'حفظ التعديلات' : 'إضافة المشروع' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ReemProject.Application.Common.Interfaces;
 using ReemProject.Infrastructure.Data;
+using ReemProject.Infrastructure.Services;
 
 namespace ReemProject.Infrastructure;
 
@@ -15,22 +16,20 @@ public static class DependencyInjection
         {
             if (environment.IsDevelopment())
             {
-                // SQLite for local development — no server required
                 options.UseSqlite(
                     "Data Source=ReemProject.db",
                     b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
             }
             else
             {
-                // SQL Server 2025 for staging and production
                 options.UseSqlServer(
                     configuration.GetConnectionString("DefaultConnection"),
                     b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
             }
         });
 
-        services.AddScoped<IApplicationDbContext>(provider =>
-            provider.GetRequiredService<ApplicationDbContext>());
+        services.AddScoped<IApplicationDbContext>(p => p.GetRequiredService<ApplicationDbContext>());
+        services.AddScoped<IJwtService, JwtService>();
 
         return services;
     }

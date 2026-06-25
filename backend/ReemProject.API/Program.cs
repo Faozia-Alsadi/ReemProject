@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using ReemProject.API.Middleware;
 using ReemProject.Application;
 using ReemProject.Infrastructure;
+using ReemProject.Infrastructure.Data;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -75,5 +76,12 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// ── Seed database ─────────────────────────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await DbSeeder.SeedAsync(db);
+}
 
 app.Run();
